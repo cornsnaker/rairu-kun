@@ -20,15 +20,16 @@ RUN echo '#!/bin/bash' > /start.sh \
     && echo "/usr/sbin/sshd -D &" >> /start.sh \
     && echo "echo 'Starting Tailscale...'" >> /start.sh \
     && echo "tailscaled --state=/var/lib/tailscale/tailscaled.state &" >> /start.sh \
-    && echo "sleep 5" >> /start.sh \
+    && echo "sleep 10" >> /start.sh \
     && echo "if [ -z \"\$TAILSCALE_AUTHKEY\" ]; then echo 'Error: TAILSCALE_AUTHKEY missing'; exit 1; fi" >> /start.sh \
     && echo "tailscale up --authkey=\$TAILSCALE_AUTHKEY --hostname=\$TAILSCALE_HOSTNAME || echo 'Error: Invalid auth key'" >> /start.sh \
+    && echo "sleep 5" >> /start.sh \
     && echo "echo 'Tailscale IP address(es):'" >> /start.sh \
     && echo "tailscale ip" >> /start.sh \
     && echo "echo 'SSH into container with: ssh root@<Tailscale-IP> (Password: craxid)'" >> /start.sh \
     && chmod +x /start.sh
 
-# Expose SSH port
+# Expose SSH port (optional, for local testing)
 EXPOSE 22
 
 # Run startup script
