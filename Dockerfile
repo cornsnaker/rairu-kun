@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install required packages
 RUN apt update && apt upgrade -y && apt install -y \
-    openssh-server curl vim python3 iproute2
+    openssh-server curl vim python3 iproute2 net-tools
 
 # Setup SSH
 RUN mkdir -p /run/sshd \
@@ -26,10 +26,13 @@ RUN echo '#!/bin/bash' > /start.sh \
     && echo "echo 'Starting Cloudflare Tunnel for SSH...'" >> /start.sh \
     && echo "cloudflared tunnel run --token \$CLOUDFLARE_TOKEN --url tcp://localhost:22 &" >> /start.sh \
     && echo "sleep 5" >> /start.sh \
-    && echo "echo 'SSH via Cloudflare Tunnel ready'" >> /start.sh \
-    && echo "echo 'HTTP web app available on Railway at http://localhost:\$PORT'" >> /start.sh \
+    && echo "echo '✅ Container ready!'" >> /start.sh \
+    && echo "echo 'SSH via Cloudflare Tunnel: ssh root@<cloudflare-hostname> (Password: craxid)'" >> /start.sh \
+    && echo "echo 'HTTP app available on Railway: http://localhost:\$PORT'" >> /start.sh \
     && chmod +x /start.sh
 
+# Expose SSH port locally (optional)
 EXPOSE 22
 
+# Run startup script
 CMD ["/bin/bash", "/start.sh"]
