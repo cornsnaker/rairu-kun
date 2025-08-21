@@ -16,7 +16,7 @@ RUN wget -q https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip
     && rm /ngrok.zip \
     && chmod +x /ngrok
 
-# Create SSH dir
+# Create SSH directory
 RUN mkdir -p /run/sshd
 
 # Setup startup script using HEREDOC
@@ -40,7 +40,7 @@ print('ssh info:\\nssh root@' + data['tunnels'][0]['public_url'][6:].replace(':'
 /usr/sbin/sshd -D
 EOF
 
-# Make script executable
+# Make the script executable
 RUN chmod +x /openssh.sh
 
 # Configure SSH root login
