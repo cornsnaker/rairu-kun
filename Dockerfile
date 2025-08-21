@@ -11,8 +11,8 @@ RUN mkdir -p /run/sshd \
     && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config \
     && echo "root:craxid" | chpasswd
 
-# Install Cloudflared
-RUN wget -O /usr/local/bin/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+# Install Cloudflared using curl instead of wget
+RUN curl -L -o /usr/local/bin/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
     && chmod +x /usr/local/bin/cloudflared
 
 # Startup script
