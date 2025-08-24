@@ -22,9 +22,19 @@ RUN mkdir -p /run/sshd
 
 # Setup startup script
 RUN echo '#!/bin/bash' > /openssh.sh \
-    && echo '/ngrok tcp --authtoken "$NGROK_TOKEN" --region "$REGION" 22 &' >> /openssh.sh \
+    && echo 'set -e' >> /openssh.sh \
+    && echo 'if [ -z "$NGROK_TOKEN" ]; then echo "Error: NGROK_TOKEN missing"; exit 1; fi' >> /openssh.sh \
+    && echo '/ngrok tcp 22 --authtoken "$NGROK_TOKEN" --region "$REGION" > /ngrok.log 2>&1 &' >> /openssh.sh \
     && echo 'sleep 5' >> /openssh.sh \
-    && echo 'curl -s http://localhost:4040/api/tunnels | python3 -c "import sys, json; data=json.load(sys.stdin); print(\"ssh info:\\nssh root@\" + data[\"tunnels\"][0][\"public_url\"][6:].replace(\":\", \" -p \") + \"\\nROOT Password:craxid\")" || echo "Error: NGROK_TOKEN missing"' >> /openssh.sh \
+    && echo 'curl -s http://localhost:4040/api/tunnels | python3 -c "import sys, json; \
+try: \
+    data=json.load(sys.stdin); \
+    if \\"tunnels\\" in data and data[\\"tunnels\\"]: \
+        print(\\"ssh info:\\nssh root@\\" + data[\\"tunnels\\"][0][\\"public_url\\"][6:].replace(\\":\\", \\" -p \\") + \\"\\nROOT Password:craxid\\"); \
+    else: \
+        print(\\"Error: No tunnels found\\") \
+except Exception as e: \
+    print(\\"Error: NGROK not running or bad NGROK_TOKEN\\")"' >> /openssh.sh \
     && echo '/usr/sbin/sshd -D' >> /openssh.sh \
     && chmod +x /openssh.sh
 
