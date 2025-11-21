@@ -1,15 +1,18 @@
 # Use stable Debian base
 FROM debian:stable
 
-# Environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 ENV REGION=ap
-# NGROK_TOKEN should be set in Railway environment variables at runtime
 
-# Install required packages
-RUN apt update && apt upgrade -y && apt install -y \
-    openssh-server wget unzip vim curl python3 \
+# Install required packages + docker client and compose plugin
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+    openssh-server wget unzip vim curl python3 python3-pip \
+    ca-certificates apt-transport-https gnupg lsb-release \
+    docker.io docker-compose-plugin \
     && rm -rf /var/lib/apt/lists/*
+
+# Make sure docker group exists
+RUN groupadd -f docker
 
 # Download and setup ngrok
 RUN wget -q https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip -O /ngrok.zip \
@@ -32,8 +35,10 @@ RUN echo '#!/bin/bash' > /openssh.sh \
 RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config \
     && echo "root:craxid" | chpasswd
 
+# Add root to docker group (container runs as root anyway)
+RUN usermod -aG docker root || true
+
 # Expose ports
 EXPOSE 22 4040 80 443
 
-# Run the startup script
 CMD ["/bin/bash", "/openssh.sh"]
