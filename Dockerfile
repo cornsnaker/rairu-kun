@@ -1,38 +1,33 @@
 FROM debian:stable
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV REGION=ap
 
+# Install SSH, Docker, and your required utilities
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     openssh-server wget unzip vim curl python3 python3-pip \
     ca-certificates apt-transport-https gnupg lsb-release \
     docker.io \
     && rm -rf /var/lib/apt/lists/*
 
-# optionally install docker-compose (v1) via pip (uncomment if you want)
+# Optionally install docker-compose via pip
 # RUN pip3 install docker-compose
 
+# Ensure docker group exists
 RUN groupadd -f docker
 
-RUN wget -q https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip -O /ngrok.zip \
-    && unzip /ngrok.zip -d / \
-    && rm /ngrok.zip \
-    && chmod +x /ngrok
-
+# Setup SSH directory
 RUN mkdir -p /run/sshd
 
-RUN echo '#!/bin/bash' > /openssh.sh \
-    && echo '/ngrok tcp --authtoken "$NGROK_TOKEN" --region "$REGION" 22 &' >> /openssh.sh \
-    && echo 'sleep 5' >> /openssh.sh \
-    && echo 'curl -s http://localhost:4040/api/tunnels | python3 -c "import sys, json; data=json.load(sys.stdin); print(\"ssh info:\\nssh root@\" + data[\"tunnels\"][0][\"public_url\"][6:].replace(\":\", \" -p \") + \"\\nROOT Password:craxid\")" || echo "Error: NGROK_TOKEN missing"' >> /openssh.sh \
-    && echo '/usr/sbin/sshd -D' >> /openssh.sh \
-    && chmod +x /openssh.sh
-
+# Configure SSH to allow root login with your password
 RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config \
+    && echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config \
     && echo "root:craxid" | chpasswd
 
+# Add root to docker group
 RUN usermod -aG docker root || true
 
-EXPOSE 22 4040 80 443
+# Expose SSH (22) and standard web ports if you run web apps
+EXPOSE 22 80 443
 
-CMD ["/bin/bash", "/openssh.sh"]
+# Start the SSH daemon directly in the foreground
+CMD ["/usr/sbin/sshd", "-D"]
